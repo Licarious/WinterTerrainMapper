@@ -12,6 +12,7 @@ namespace LicariousPDXLibrary
         public string type = "";
 
         public float winter = 0.0f;
+        public string winterAtNotFound = "";
 
         public List<ProvWinterMatch> wmList = new();
 

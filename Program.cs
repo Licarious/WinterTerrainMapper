@@ -86,7 +86,12 @@ namespace WinterTerrainMaper
                             //if line contains "@" 
                             if (cl.Contains('@')) {
                                 //get string after @ and match it to the value in winterValues and set the value of the prov
-                                tmpProv.winter = winterValues[line.Split('@')[1].Split()[0].Trim()];
+                                if (winterValues.TryGetValue(cl.Split('@')[1].Trim(), out float value)) {
+                                    tmpProv.winter = value;
+                                }
+                                else {
+                                    tmpProv.winterAtNotFound = cl.Split('@')[1].Split("}")[0].Trim();
+                                }
                             }
                             else {
                                 //get all strings after = and check if they are a float, if so set the value of the prov
@@ -107,8 +112,24 @@ namespace WinterTerrainMaper
                         if (cl.Contains('}')) tmpProv = null;
                     }
                 }
+
+                
+                //for every prov in provDict that has a value in winterAtNotFound, try to find a match in winterValues
+                foreach (Province prov in provDict.Values) {
+                    if (prov.winterAtNotFound != "") {
+                        //find a match in winterValues
+                        foreach (string key in winterValues.Keys) {
+                            if (key.Contains(prov.winterAtNotFound)) {
+                                prov.winter = winterValues[key];
+                                //Console.WriteLine("\t" + prov.winterAtNotFound + " = " + prov.winter);
+                                prov.winterAtNotFound = "";
+                                break;
+                            }
+                        }
+                    }
+                }
             }
-            
+
             void DrawWinterMap(Dictionary<Color, Province> provDict) {
                 Bitmap bmp = new(localDir + @"\_Input\map_data\provinces.png");
                 //create a new bitmap of the same size

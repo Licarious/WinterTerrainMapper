@@ -1,0 +1,1 @@
+start /d "%~dp0bin\Debug\net7.0\" WinterTerrainMapper.exe
