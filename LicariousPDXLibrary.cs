@@ -13,6 +13,8 @@ namespace LicariousPDXLibrary
 
         public float winter = 0.0f;
         public string winterAtNotFound = "";
+        
+        public HashSet<float> winterValues = new();
 
         public List<ProvWinterMatch> wmList = new();
 
@@ -141,7 +143,11 @@ namespace LicariousPDXLibrary
         public static void ParseProvMap(Dictionary<Color, Province> provDict, string path) {
             Console.WriteLine("Parsing provinces map...");
             //load the provinces.bmp image
-            Bitmap bmp = new(path + @"provinces.png");
+            Bitmap bmp = new(path + @"map_data\provinces.png");
+            Bitmap? winter = null;
+            if (File.Exists(path + @"\winter.png")) {
+                winter = new(path + @"\winter.png");
+            }
             //loop through all pixels
             for (int x = 0; x < bmp.Width; x++) {
                 for (int y = 0; y < bmp.Height; y++) {
@@ -150,6 +156,15 @@ namespace LicariousPDXLibrary
                     //if color is in provDict add the coord to the prov
                     if (provDict.TryGetValue(color, out Province value)) {
                         value.coords.Add(new(x, y));
+                        if (winter != null) {
+                            Color winterColor = winter.GetPixel(x, y);
+                            //convert to int using the Red - 25 / 200 and add it to value if it is not already in winterValues
+                            float winterValue = ((float)winterColor.R -25) / 200;
+                            if (!value.winterValues.Contains(winterValue)) {
+                                value.winterValues.Add(winterValue);
+                                //Console.WriteLine(value.id +" - "+winterValue);
+                            }
+                        }
                     }
                 }
 

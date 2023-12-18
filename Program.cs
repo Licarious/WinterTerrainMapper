@@ -24,11 +24,11 @@ namespace WinterTerrainMaper
             //dictonary for storing winterName and float
             Dictionary<string, float> winterValues = new();
             ParseWinter(provDict, winterValues);
-            LicariousPDXLib.ParseProvMap(provDict, localDir + @"\_Input\map_data\");
+            LicariousPDXLib.ParseProvMap(provDict, localDir + @"\_Input\");
             
             if (File.Exists(localDir + @"\_Input\winter.png")) {
                 Dictionary<Color, Province> winterProvDict = ParseWinterMap();
-                MatchCoords(provDict, winterProvDict);
+                MatchCoords2(provDict, winterProvDict);
                 WriteWinterValues(provDict, winterValues);
             }
             DrawWinterMap(provDict);
@@ -146,7 +146,15 @@ namespace WinterTerrainMaper
 
                 //if the output folder doesn't exist create it
                 if (!Directory.Exists(localDir + @"\_Output\" + name+"\\")) {
-                    Directory.CreateDirectory(localDir + @"\_Output\" + name + "\\");
+                    try {
+                        Directory.CreateDirectory(localDir + @"\_Output\" + name + "\\");
+                    }
+                    catch {
+                        Console.WriteLine("Error " + localDir + @"\_Output\" + name + "\\" + "could not be created");
+                        //wait for user input to close
+                        Console.ReadLine();
+                        Environment.Exit(0);
+                    }
                 }
 
                 //save the bitmap
@@ -253,6 +261,58 @@ namespace WinterTerrainMaper
                     //print progress every 500 provs
                     if (i % 500 == 0) {
                         Console.WriteLine("\t" + Math.Round((i / (float)count * 100), 0)+"%");
+                    }
+                });
+
+            }
+
+            void MatchCoords2(Dictionary<Color, Province> provDict, Dictionary<Color, Province> winterDict) {
+                Console.WriteLine("matching provs to Winter...");
+                int count = provDict.Count;
+                int i = 0;
+
+                //loop through all provs in provDict
+                //paralell for each
+                Parallel.ForEach(provDict.Values, prov => {
+                    if (prov.coords.Count == 0) {
+                        //Console.WriteLine("prov " + prov.id + " has no coords");
+                        return;
+                    }
+
+                    foreach (Province winterProv in winterDict.Values) {
+                        //if prov.winterValues does not contain winterProv.winter continue
+                        if (!prov.winterValues.Contains(winterProv.winter)) {
+                            continue;
+                        }
+
+                        //find all winterProv in winterDict whose coords overlap with prov.coords and create a new ProvWinterMatch with prov and winterProv and add it to prov.wmList
+                        if (winterProv.coords.Overlaps(prov.coords)) {
+                            prov.wmList.Add(new ProvWinterMatch(prov, winterProv));
+                        }
+                    }
+
+                    /*
+                    //find all winterProv in winterDict whose coords overlap with prov.coords and create a new ProvWinterMatch with prov and winterProv and add it to prov.wmList
+                    prov.wmList.AddRange(winterDict.Values.Where(winterProv 
+                        => winterProv.coords.Overlaps(prov.coords)).Select(winterProv 
+                        => new ProvWinterMatch(prov, winterProv)));
+                    */
+
+                    if (avWinterValues) {
+                        //do a weighted average of the winter values of the provs in wmList
+                        float sum = 0;
+                        foreach (ProvWinterMatch match in prov.wmList) {
+                            sum += match.sharedPixels * match.winterValue;
+                        }
+                        prov.winter = sum / prov.coords.Count;
+                    }
+                    else {
+                        prov.winter = prov.wmList.OrderByDescending(match => match.sharedPixels).First().winterValue;
+                    }
+                    i += 1;
+                    //print progress every 500 provs
+                    if (i % 500 == 0) {
+                        Console.WriteLine("\t" + Math.Round((i / (float)count * 100), 0) + "%");
                     }
                 });
 
