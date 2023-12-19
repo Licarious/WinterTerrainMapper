@@ -358,23 +358,28 @@ namespace WinterTerrainMaper
             
             void GetConfig() {
                 //read settings.cfg and set variables
-                string[] lines = File.ReadAllLines(localDir + @"\_Input\settings.cfg");
-                
-                foreach(string line in lines) {
-                    string cl = LicariousPDXLib.CleanLine(line);
+                try {
+                    string[] lines = File.ReadAllLines(localDir + @"\_Input\settings.cfg");
 
-                    if (cl == "") continue;
+                    foreach (string line in lines) {
+                        string cl = LicariousPDXLib.CleanLine(line);
 
-                    if (cl.Contains('=')) {
-                        string[] parts = cl.Split('=');
+                        if (cl == "") continue;
 
-                        if (parts[0].Contains("name")) {
-                            name = parts[1].Replace("\"","").Trim();
-                        }
-                        else if (parts[0].Contains("averageWinterValues")) {
-                            avWinterValues = bool.Parse(parts[1].Trim());
+                        if (cl.Contains('=')) {
+                            string[] parts = cl.Split('=');
+
+                            if (parts[0].Contains("name")) {
+                                name = parts[1].Replace("\"", "").Trim();
+                            }
+                            else if (parts[0].Contains("averageWinterValues")) {
+                                avWinterValues = bool.Parse(parts[1].Trim());
+                            }
                         }
                     }
+                }
+                catch {
+                    Console.WriteLine("Could not read settings.cfg file using default settings");
                 }
 
                 //print values
