@@ -14,6 +14,15 @@ namespace WinterTerrainMaper
             bool avWinterValues = false; //true - Averages all the winter values for each province, false - uses the value covering the most shared pixels
             string name = "V 1.8";
             
+            //send a eror message if the .net version is not 7.0
+            if (Environment.Version.Major < 7) {
+                Console.WriteLine("This program requires .NET 7.0 or higher to run.");
+                Console.WriteLine("Press any key to exit...");
+                Console.ReadKey();
+                return;
+            }
+
+
             Stopwatch stopwatch = new();
             stopwatch.Start();
             
