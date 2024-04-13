@@ -363,7 +363,8 @@ namespace WinterTerrainMaper
 
                 //write @string = float from winterValues to sw
                 foreach (KeyValuePair<string, float> pair in winterValues) {
-                    sw.WriteLine("@" + pair.Key + " = " + pair.Value);
+                    
+                    sw.WriteLine("@" + pair.Key + " = " + pair.Value.ToString(CultureInfo.InvariantCulture));
                 }
 
                 sw.WriteLine();
@@ -375,10 +376,10 @@ namespace WinterTerrainMaper
 
                     //if wValue is a value in winterValues write name 
                     if (winterValues.ContainsValue(prov.winter)) {
-                        sw.WriteLine(prov.id + " ={ winter_severity_bias = @" + winterValues.Keys.ElementAt(winterValues.Values.ToList().IndexOf(prov.winter)) + " } #" + prov.name);
+                        sw.WriteLine(prov.id + " ={ winter_severity_bias = @" + winterValues.Keys.ElementAt(winterValues.Values.ToList().IndexOf(prov.winter)).ToString(CultureInfo.InvariantCulture) + " } #" + prov.name);
                     }
                     else {
-                        sw.WriteLine(prov.id + " ={ winter_severity_bias = " + (float)Math.Round(prov.winter, 3) + " } #" + prov.name);
+                        sw.WriteLine(prov.id + " ={ winter_severity_bias = " + Math.Round(prov.winter, 3).ToString(CultureInfo.InvariantCulture) + " } #" + prov.name);
                     }
                 }
 
