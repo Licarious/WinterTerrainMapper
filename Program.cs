@@ -3,6 +3,7 @@ using System.Drawing;
 using System.Text;
 using WinterTerrainMapper;
 using LicariousPDXLibrary;
+using System.Globalization;
 
 namespace WinterTerrainMaper
 {
@@ -86,7 +87,7 @@ namespace WinterTerrainMaper
                             string[] parts = cl.Split('=');
                             
                             string name = parts[0].Replace("@", "").Trim();
-                            float value = float.Parse(parts[1].Trim());
+                            float value = float.Parse(parts[1].Trim(), CultureInfo.InvariantCulture);
                             //if name is already in winterValues update the value
                             if (winterValues.ContainsKey(name)) {
                                 winterValues[name] = value;
@@ -95,7 +96,7 @@ namespace WinterTerrainMaper
                                 winterValues.Add(name, value);
                             }
 
-                            Console.WriteLine("\t"+parts[0].Replace("@", "").Trim() + " = " + float.Parse(parts[1].Trim()));
+                            Console.WriteLine("\t"+parts[0].Replace("@", "").Trim() + " = " + float.Parse(parts[1].Trim(), CultureInfo.InvariantCulture));
                         }
 
                         //if cl contains a "=" and starts with a number get the province
@@ -110,8 +111,10 @@ namespace WinterTerrainMaper
                             //if line contains "@" 
                             if (cl.Contains('@')) {
                                 //get string after @ and match it to the value in winterValues and set the value of the prov
-                                if (winterValues.TryGetValue(cl.Split('@')[1].Trim(), out float value)) {
-                                    tmpProv.winter = value;
+                                if (winterValues.TryGetValue(cl.Split('@')[1].Trim(), out float value) &&
+                                float.TryParse(value.ToString(CultureInfo.InvariantCulture), NumberStyles.Any, CultureInfo.InvariantCulture, out float parsedValue)) { 
+                                    tmpProv.winter = parsedValue;
+
                                 }
                                 else {
                                     tmpProv.winterAtNotFound = cl.Split('@')[1].Split("}")[0].Trim();
@@ -122,8 +125,10 @@ namespace WinterTerrainMaper
                                 string[] parts = cl.Split('=')[^1].Split();
                                 float val = 0f;
                                 foreach (string part in parts) {
-                                    if (float.TryParse(part.Trim(), out float value)) {
-                                        val = value;
+                                    if (winterValues.TryGetValue(part.Trim(), out float value) &&
+                                    float.TryParse(value.ToString(CultureInfo.InvariantCulture), NumberStyles.Any, CultureInfo.InvariantCulture, out float parsedValue)) {
+                                        val = parsedValue;
+
                                     }
                                 }
                                 if (val > 1) val = 1;
