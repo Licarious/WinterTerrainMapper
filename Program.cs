@@ -111,6 +111,8 @@ namespace WinterTerrainMaper
                             //if line contains "@" 
                             if (cl.Contains('@')) {
                                 //get string after @ and match it to the value in winterValues and set the value of the prov
+
+
                                 if (winterValues.TryGetValue(cl.Split('@')[1].Trim(), out float value) &&
                                 float.TryParse(value.ToString(CultureInfo.InvariantCulture), NumberStyles.Any, CultureInfo.InvariantCulture, out float parsedValue)) { 
                                     tmpProv.winter = parsedValue;
@@ -125,10 +127,8 @@ namespace WinterTerrainMaper
                                 string[] parts = cl.Split('=')[^1].Split();
                                 float val = 0f;
                                 foreach (string part in parts) {
-                                    if (winterValues.TryGetValue(part.Trim(), out float value) &&
-                                    float.TryParse(value.ToString(CultureInfo.InvariantCulture), NumberStyles.Any, CultureInfo.InvariantCulture, out float parsedValue)) {
-                                        val = parsedValue;
-
+                                    if (float.TryParse(part.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out float value)) {
+                                        val = value;
                                     }
                                 }
                                 if (val > 1) val = 1;

@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("WinterTerrainMapper")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+924e3a899f1f2f4e75a078724c9bedc29bcef7f1")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+29b3d1ad03855ecc9bdd97f3ec56fd7ce5fb7844")]
 [assembly: System.Reflection.AssemblyProductAttribute("WinterTerrainMapper")]
 [assembly: System.Reflection.AssemblyTitleAttribute("WinterTerrainMapper")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
