@@ -30,7 +30,7 @@ namespace LicariousPDXLibrary
 
     internal class LicariousPDXLib
     {
-        public static string CleanLine(string line) => line.Replace("{", " { ").Replace("}", " } ").Replace("=", " = ").Replace("  ", " ").Split('#')[0].Trim();
+        public static string CleanLine(string line) => line.Split('#')[0].Replace("{", " { ").Replace("}", " } ").Replace("=", " = ").Replace("  ", " ").Trim();
 
         public static Dictionary<Color, Province> ParseDefinitions(string path) {
             Console.WriteLine("Parsing definitions...");
@@ -79,6 +79,10 @@ namespace LicariousPDXLibrary
         public static void GetRangeList(string line, Dictionary<Color, Province> provDict) {
             string type = line.Split("=")[0].Trim().ToLower();
 
+            //lists of water and wasteland types
+            List<string> watterTypes = new List<string>() { "sea_zones", "lakes", "river_provinces" };
+            List<string> wastelandTypes = new List<string>() { "wasteland", "impassable_terrain", "uninhabitable"};
+
             //if line contains RANGE
             if (line.ToUpper().Contains("RANGE")) {
                 //split the line on { and }
@@ -98,8 +102,8 @@ namespace LicariousPDXLibrary
                     //find prov with id i
                     foreach (Province prov in provDict.Values) {
                         if (prov.id == i) {
-                            if ((prov.type == "sea_zones" && (type == "wasteland" || type == "impassable_terrain"))
-                                || (prov.type == "wasteland" || prov.type == "impassable_terrain") && type == "sea_zones") {
+                            //if prov.type is in watterTypes and type is in wastelandTypes or vice versa then set prov.type to "impassable_sea"
+                            if (watterTypes.Contains(prov.type) && wastelandTypes.Contains(type) || wastelandTypes.Contains(prov.type) && watterTypes.Contains(type)) {
                                 prov.type = "impassable_sea";
                             }
                             else {

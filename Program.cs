@@ -9,7 +9,19 @@ namespace WinterTerrainMaper
     internal class Program
     {
         private static void Main(string[] args) {
-            string localDir = Directory.GetParent(Directory.GetCurrentDirectory()).Parent.Parent.FullName;
+
+            //starting at the root of the progject move up unitll we find the _Input folder
+            string localDir = Directory.GetCurrentDirectory();
+            while (!Directory.Exists(localDir + @"\_Input")) {
+                localDir = Directory.GetParent(localDir).FullName;
+                //stop looking after we reach the root of the drive
+                if (localDir.Length <= 4) {
+                    Console.WriteLine("Could not find _Input folder");
+                    Console.WriteLine("Press any key to exit...");
+                    Console.ReadKey();
+                    return;
+                }
+            }
 
             bool avWinterValues = false; //true - Averages all the winter values for each province, false - uses the value covering the most shared pixels
             string name = "V 1.8";
@@ -42,8 +54,11 @@ namespace WinterTerrainMaper
             }
             DrawWinterMap(provDict);
 
-            Console.WriteLine("Done! " + stopwatch.Elapsed + "s");            
-            
+            //print done and wait
+            Console.WriteLine("Done! " + stopwatch.Elapsed + "s");
+            Console.WriteLine("Press any key to exit...");
+            Console.ReadKey();
+
             void ParseWinter(Dictionary<Color, Province> provDict, Dictionary<string, float> winterValues) {
                 //convert provDict to dictionary with id as key
                 Dictionary<int, Province> provDict2 = new();

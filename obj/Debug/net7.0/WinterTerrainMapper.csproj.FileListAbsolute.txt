@@ -12,9 +12,10 @@ B:\desktop\-mods-\MNR2\Utilities\WinterTerrainMapper\WinterTerrainMapper\obj\Deb
 B:\desktop\-mods-\MNR2\Utilities\WinterTerrainMapper\WinterTerrainMapper\obj\Debug\net7.0\WinterTerrainMapper.AssemblyInfoInputs.cache
 B:\desktop\-mods-\MNR2\Utilities\WinterTerrainMapper\WinterTerrainMapper\obj\Debug\net7.0\WinterTerrainMapper.AssemblyInfo.cs
 B:\desktop\-mods-\MNR2\Utilities\WinterTerrainMapper\WinterTerrainMapper\obj\Debug\net7.0\WinterTerrainMapper.csproj.CoreCompileInputs.cache
-B:\desktop\-mods-\MNR2\Utilities\WinterTerrainMapper\WinterTerrainMapper\obj\Debug\net7.0\WinterTerrainMapper.csproj.CopyComplete
 B:\desktop\-mods-\MNR2\Utilities\WinterTerrainMapper\WinterTerrainMapper\obj\Debug\net7.0\WinterTerrainMapper.dll
 B:\desktop\-mods-\MNR2\Utilities\WinterTerrainMapper\WinterTerrainMapper\obj\Debug\net7.0\refint\WinterTerrainMapper.dll
 B:\desktop\-mods-\MNR2\Utilities\WinterTerrainMapper\WinterTerrainMapper\obj\Debug\net7.0\WinterTerrainMapper.pdb
 B:\desktop\-mods-\MNR2\Utilities\WinterTerrainMapper\WinterTerrainMapper\obj\Debug\net7.0\WinterTerrainMapper.genruntimeconfig.cache
 B:\desktop\-mods-\MNR2\Utilities\WinterTerrainMapper\WinterTerrainMapper\obj\Debug\net7.0\ref\WinterTerrainMapper.dll
+B:\desktop\-mods-\MNR2\Utilities\WinterTerrainMapper\WinterTerrainMapper\obj\Debug\net7.0\WinterTerrainMapper.sourcelink.json
+B:\desktop\-mods-\MNR2\Utilities\WinterTerrainMapper\WinterTerrainMapper\obj\Debug\net7.0\WinterTe.C0D66463.Up2Date
