@@ -26,7 +26,7 @@ namespace WinterTerrainMaper
 
             bool avWinterValues = false; //true - Averages all the winter values for each province, false - uses the value covering the most shared pixels
             string name = "V 1.8";
-            
+
             //send a eror message if the .net version is not 7.0
             if (Environment.Version.Major < 7) {
                 Console.WriteLine("This program requires .NET 7.0 or higher to run.");
@@ -38,16 +38,16 @@ namespace WinterTerrainMaper
 
             Stopwatch stopwatch = new();
             stopwatch.Start();
-            
+
             GetConfig();
-            
+
             Dictionary<Color, Province> provDict = LicariousPDXLib.ParseDefinitions(localDir + @"\_Input\map_data\");
             LicariousPDXLib.ParseDefaultMap(provDict, localDir + @"\_Input\map_data\");
             //dictonary for storing winterName and float
             Dictionary<string, float> winterValues = new();
             ParseWinter(provDict, winterValues);
             LicariousPDXLib.ParseProvMap(provDict, localDir + @"\_Input\");
-            
+
             if (File.Exists(localDir + @"\_Input\winter.png")) {
                 Dictionary<Color, Province> winterProvDict = ParseWinterMap();
                 MatchCoords2(provDict, winterProvDict);
@@ -85,7 +85,7 @@ namespace WinterTerrainMaper
                         //if line starts with @ split the line on = and store the name and float in winterValues
                         if (cl.StartsWith("@")) {
                             string[] parts = cl.Split('=');
-                            
+
                             string name = parts[0].Replace("@", "").Trim();
                             float value = float.Parse(parts[1].Trim(), CultureInfo.InvariantCulture);
                             //if name is already in winterValues update the value
@@ -96,7 +96,7 @@ namespace WinterTerrainMaper
                                 winterValues.Add(name, value);
                             }
 
-                            Console.WriteLine("\t"+parts[0].Replace("@", "").Trim() + " = " + float.Parse(parts[1].Trim(), CultureInfo.InvariantCulture));
+                            Console.WriteLine("\t" + parts[0].Replace("@", "").Trim() + " = " + float.Parse(parts[1].Trim(), CultureInfo.InvariantCulture));
                         }
 
                         //if cl contains a "=" and starts with a number get the province
@@ -114,7 +114,7 @@ namespace WinterTerrainMaper
 
 
                                 if (winterValues.TryGetValue(cl.Split('@')[1].Trim(), out float value) &&
-                                float.TryParse(value.ToString(CultureInfo.InvariantCulture), NumberStyles.Any, CultureInfo.InvariantCulture, out float parsedValue)) { 
+                                float.TryParse(value.ToString(CultureInfo.InvariantCulture), NumberStyles.Any, CultureInfo.InvariantCulture, out float parsedValue)) {
                                     tmpProv.winter = parsedValue;
 
                                 }
@@ -142,7 +142,7 @@ namespace WinterTerrainMaper
                     }
                 }
 
-                
+
                 //for every prov in provDict that has a value in winterAtNotFound, try to find a match in winterValues
                 foreach (Province prov in provDict.Values) {
                     if (prov.winterAtNotFound != "") {
@@ -182,7 +182,7 @@ namespace WinterTerrainMaper
                 }
 
                 //if the output folder doesn't exist create it
-                if (!Directory.Exists(localDir + @"\_Output\" + name+"\\")) {
+                if (!Directory.Exists(localDir + @"\_Output\" + name + "\\")) {
                     try {
                         Directory.CreateDirectory(localDir + @"\_Output\" + name + "\\");
                     }
@@ -195,12 +195,12 @@ namespace WinterTerrainMaper
                 }
 
                 //save the bitmap
-                bmpWinter.Save(localDir + @"\_Output\"+name+@"\winter.png");
+                bmpWinter.Save(localDir + @"\_Output\" + name + @"\winter.png");
             }
 
             Dictionary<Color, Province> ParseWinterMap() {
                 Console.WriteLine("Parsing winter map...");
-                
+
                 Dictionary<Color, Province> winterProvDict = new();
 
                 //load witer.png
@@ -237,14 +237,14 @@ namespace WinterTerrainMaper
                             if (winter > 1) winter = 1;
                             else if (winter < 0) winter = 0;
                             prov.winter = winter;
-                            
+
                             winterProvDict.Add(color, prov);
                         }
                     }
 
                     //print progress every 20%
                     if (x % (bmp.Width / 5) == 0) {
-                        Console.WriteLine("\t"+(x / (bmp.Width / 5) * 20) + "%");
+                        Console.WriteLine("\t" + (x / (bmp.Width / 5) * 20) + "%");
                     }
                 }
 
@@ -282,58 +282,6 @@ namespace WinterTerrainMaper
                     //find all winterProv in winterDict whose coords overlap with prov.coords and create a new ProvWinterMatch with prov and winterProv and add it to prov.wmList
                     prov.wmList.AddRange(winterDict.Values.Where(winterProv => winterProv.coords.Overlaps(prov.coords)).Select(winterProv => new ProvWinterMatch(prov, winterProv)));
 
-                    
-                    if (avWinterValues) {
-                        //do a weighted average of the winter values of the provs in wmList
-                        float sum = 0;
-                        foreach (ProvWinterMatch match in prov.wmList) {
-                            sum += match.sharedPixels * match.winterValue;
-                        }
-                        prov.winter = sum / prov.coords.Count;
-                    }
-                    else {
-                        prov.winter = prov.wmList.OrderByDescending(match => match.sharedPixels).First().winterValue;
-                    }
-                    i += 1;
-                    //print progress every 500 provs
-                    if (i % 500 == 0) {
-                        Console.WriteLine("\t" + Math.Round((i / (float)count * 100), 0)+"%");
-                    }
-                });
-
-            }
-
-            void MatchCoords2(Dictionary<Color, Province> provDict, Dictionary<Color, Province> winterDict) {
-                Console.WriteLine("matching provs to Winter...");
-                int count = provDict.Count;
-                int i = 0;
-
-                //loop through all provs in provDict
-                //paralell for each
-                Parallel.ForEach(provDict.Values, prov => {
-                    if (prov.coords.Count == 0) {
-                        //Console.WriteLine("prov " + prov.id + " has no coords");
-                        return;
-                    }
-
-                    foreach (Province winterProv in winterDict.Values) {
-                        //if prov.winterValues does not contain winterProv.winter continue
-                        if (!prov.winterValues.Contains(winterProv.winter)) {
-                            continue;
-                        }
-
-                        //find all winterProv in winterDict whose coords overlap with prov.coords and create a new ProvWinterMatch with prov and winterProv and add it to prov.wmList
-                        if (winterProv.coords.Overlaps(prov.coords)) {
-                            prov.wmList.Add(new ProvWinterMatch(prov, winterProv));
-                        }
-                    }
-
-                    /*
-                    //find all winterProv in winterDict whose coords overlap with prov.coords and create a new ProvWinterMatch with prov and winterProv and add it to prov.wmList
-                    prov.wmList.AddRange(winterDict.Values.Where(winterProv 
-                        => winterProv.coords.Overlaps(prov.coords)).Select(winterProv 
-                        => new ProvWinterMatch(prov, winterProv)));
-                    */
 
                     if (avWinterValues) {
                         //do a weighted average of the winter values of the provs in wmList
@@ -355,6 +303,62 @@ namespace WinterTerrainMaper
 
             }
 
+            void MatchCoords2(Dictionary<Color, Province> provDict, Dictionary<Color, Province> winterDict) {
+                Console.WriteLine("matching provs to Winter...");
+                int count = provDict.Count;
+                int i = 0;
+
+                int maxThreads = (int)(Environment.ProcessorCount * 0.8);
+                ParallelOptions options = new ParallelOptions();
+                options.MaxDegreeOfParallelism = maxThreads;
+
+                Console.WriteLine("Running on " + maxThreads + " threads");
+
+                //loop through all provs in provDict
+                //paralell for each
+                Parallel.ForEach(provDict.Values, options, prov => {
+                    if (prov.coords.Count == 0) {
+                        //Console.WriteLine("prov " + prov.id + " has no coords");
+                        return;
+                    }
+
+                    foreach (Province winterProv in winterDict.Values) {
+                        //if prov.winterValues does not contain winterProv.winter continue
+                        if (!prov.winterValues.Contains(winterProv.winter)) {
+                            continue;
+                        }
+
+                        //find all winterProv in winterDict whose coords overlap with prov.coords and create a new ProvWinterMatch with prov and winterProv and add it to prov.wmList
+                        if (winterProv.coords.Overlaps(prov.coords)) {
+                            prov.wmList.Add(new ProvWinterMatch(prov, winterProv));
+                        }
+                    }
+
+                    if (avWinterValues) {
+                        //do a weighted average of the winter values of the provs in wmList
+                        float sum = 0;
+                        foreach (ProvWinterMatch match in prov.wmList) {
+                            sum += match.sharedPixels * match.winterValue;
+                        }
+                        prov.winter = sum / prov.coords.Count;
+                    }
+                    else {
+                        prov.winter = prov.wmList.OrderByDescending(match => match.sharedPixels).First().winterValue;
+                    }
+
+                    //clear wmList
+                    prov.wmList.Clear();
+
+                    i += 1;
+                    //print progress every 500 provs
+                    if (i % 500 == 0) {
+                        Console.WriteLine("\t" + Math.Round((i / (float)count * 100), 0) + "%");
+                        //run garbage collection
+                        GC.Collect();
+                    }
+                });
+            }
+
             void WriteWinterValues(Dictionary<Color, Province> provDict, Dictionary<string, float> winterValues) {
                 Console.WriteLine("Writing winter values...");
 
@@ -366,12 +370,12 @@ namespace WinterTerrainMaper
                 }
 
                 //create a new file with utf-8-bom encoding
-                using StreamWriter sw = new(localDir + @"\_Output\"+name+@"\01_province_properties.txt", false, Encoding.UTF8);
-                
+                using StreamWriter sw = new(localDir + @"\_Output\" + name + @"\01_province_properties.txt", false, Encoding.UTF8);
+
 
                 //write @string = float from winterValues to sw
                 foreach (KeyValuePair<string, float> pair in winterValues) {
-                    
+
                     sw.WriteLine("@" + pair.Key + " = " + pair.Value.ToString(CultureInfo.InvariantCulture));
                 }
 
@@ -393,7 +397,7 @@ namespace WinterTerrainMaper
 
                 sw.Close();
             }
-            
+
             void GetConfig() {
                 //read settings.cfg and set variables
                 try {
