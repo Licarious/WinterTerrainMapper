@@ -167,9 +167,17 @@ namespace WinterTerrainMaper
                 //for each prov in provDict
                 foreach (Province prov in provDict.Values) {
                     //loop through all coords
-                    foreach ((int x, int y) in prov.coords) {
-                        //set the pixel to the winter value
-                        bmpWinter.SetPixel(x, y, Color.FromArgb(255, (int)(prov.winter * 200) + 25, (int)(prov.winter * 200) + 25, (int)(prov.winter * 200) + 25));
+                    if (prov.type.ToLower().Contains("sea") || prov.type.ToLower().Contains("river") || prov.type.ToLower().Contains("lake")) {
+                        foreach ((int x, int y) in prov.coords) {
+                            //set the pixel to the winter value
+                            bmpWinter.SetPixel(x, y, Color.FromArgb(255, 25, 25, 255));
+                        }
+                    }
+                    else {
+                        foreach ((int x, int y) in prov.coords) {
+                            //set the pixel to the winter value
+                            bmpWinter.SetPixel(x, y, Color.FromArgb(255, (int)(prov.winter * 200) + 25, (int)(prov.winter * 200) + 25, (int)(prov.winter * 200) + 25));
+                        }
                     }
                 }
 
