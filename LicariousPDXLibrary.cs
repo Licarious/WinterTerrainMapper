@@ -1,185 +1,177 @@
+using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Drawing2D;
+using System.Drawing.Imaging;
+using System.IO;
+using System.Linq;
 using WinterTerrainMapper;
 
 namespace LicariousPDXLibrary
 {
-    internal class Province
+    internal class Province : IDrawable
     {
-        public int id = -1;
-        public string name = "";
-        public Color color = Color.FromArgb(0, 0, 0, 0);
-        public HashSet<(int x, int y)> coords = new();
-        public string type = "";
-
-        public float winter = 0.0f;
-        public string winterAtNotFound = "";
-        
-        public HashSet<float> winterValues = new();
-
-        public List<ProvWinterMatch> wmList = new();
-
-        public Dictionary<Color, Province> winterDict = new();
+        public int ID { get; set; } = -1;
+        public string Name { get; set; } = string.Empty;
+        public Color Color { get; set; } = Color.FromArgb(0, 0, 0, 0);
+        public HashSet<(int x, int y)> Coords { get; set; } = new();
+        public string Type { get; set; } = string.Empty;
+        public float Winter { get; set; } = 0.0f;
+        public string WinterAtNotFound { get; set; } = string.Empty;
+        public List<ProvWinterMatch> WinterMatches { get; set; } = new();
+        public List<(int x, int y, int h, int w)> MaximumRectangles { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
         public Province(Color color, int id, string name) {
-            this.color = color;
-            this.id = id;
-            this.name = name;
+            Color = color;
+            ID = id;
+            Name = name;
         }
+
         public Province() { }
+
+        public void GetCenter(bool floodFill = false) {
+            throw new NotImplementedException();
+        }
     }
 
     internal class LicariousPDXLib
     {
+        public static readonly HashSet<string> WaterTypes = new() { "sea_zones", "lakes", "river_provinces", "impassable_seas" };
+        public static readonly HashSet<string> WastelandTypes = new() { "wasteland", "impassable_terrain", "impassable_mountains", "uninhabitable", "impassable_seas" };
+
         public static string CleanLine(string line) => line.Split('#')[0].Replace("{", " { ").Replace("}", " } ").Replace("=", " = ").Replace("  ", " ").Trim();
 
         public static Dictionary<Color, Province> ParseDefinitions(string path) {
             Console.WriteLine("Parsing definitions...");
-            Dictionary<Color, Province> provDict = new();
+            var provDict = new Dictionary<Color, Province>();
 
-            //string[] lines = File.ReadAllLines(localDir + @"\_Input\FillColors.txt");
-            string[] lines = File.ReadAllLines(path + @"definition.csv");
-            foreach (string line in lines) {
-                string l1 = CleanLine(line);
+            foreach (var line in File.ReadLines(Path.Combine(path, "definition.csv"))) {
+                var l1 = CleanLine(line);
                 if (l1.Length == 0) continue;
 
-                //split the line on ; the first part is the id and the next 3 are the rgb values
-                string[] parts = l1.Split(';');
-                //try parse the id
-                if (int.TryParse(parts[0], out int id)) {
-                    if (id == 0) continue; //games do not use id 0
-                    int r = int.Parse(parts[1]);
-                    int g = int.Parse(parts[2]);
-                    int b = int.Parse(parts[3]);
-                    string name = parts[4];
-
-                    //if key does not exist, add it
-                    if (!provDict.ContainsKey(Color.FromArgb(r, g, b))) {
-                        provDict.Add(Color.FromArgb(r, g, b), new Province(Color.FromArgb(r, g, b), id, name));
+                var parts = l1.Split(';');
+                if (int.TryParse(parts[0], out int id) && id != 0) {
+                    var color = Color.FromArgb(int.Parse(parts[1]), int.Parse(parts[2]), int.Parse(parts[3]));
+                    if (!provDict.ContainsKey(color)) {
+                        provDict[color] = new Province(color, id, parts[4]);
                     }
                 }
             }
             return provDict;
         }
-        
+
         public static void ParseDefaultMap(Dictionary<Color, Province> provDict, string path) {
             Console.WriteLine("Parsing default.map...");
-            //read all string in default map in the Input folder
-            string[] lines = File.ReadAllLines(path + @"default.map");
+            foreach (var line in File.ReadLines(Path.Combine(path, "default.map"))) {
+                var cl = CleanLine(line);
+                if (cl.Length > 0) {
+                    GetRangeList(cl, provDict);
+                }
+            }
 
-            //loop through all lines
-            foreach (string line in lines) {
-                string cl = CleanLine(line);
-                if (cl.Length == 0) continue;
-
-                //if cl contains RANGE or LIST
-                GetRangeList(cl, provDict);
+            //print the number types of provinces
+            Dictionary<string, int> typeCount = new();
+            foreach (var prov in provDict.Values) {
+                if (typeCount.ContainsKey(prov.Type)) {
+                    typeCount[prov.Type]++;
+                }
+                else {
+                    typeCount[prov.Type] = 1;
+                }
+            }
+            foreach (var kvp in typeCount) {
+                Console.WriteLine($"{kvp.Key}: {kvp.Value}");
             }
         }
 
         public static void GetRangeList(string line, Dictionary<Color, Province> provDict) {
-            string type = line.Split("=")[0].Trim().ToLower();
+            var type = line.Split('=')[0].Trim().ToLower();
 
-            //lists of water and wasteland types
-            List<string> watterTypes = new List<string>() { "sea_zones", "lakes", "river_provinces" };
-            List<string> wastelandTypes = new List<string>() { "wasteland", "impassable_terrain", "uninhabitable"};
-
-            //if line contains RANGE
-            if (line.ToUpper().Contains("RANGE")) {
-                //split the line on { and }
-                string[] parts = line.Split('{', '}')[1].Split();
-                //get the first and last number in parts
-                int first = -1;
-                int last = -1;
-                foreach (string part in parts) {
-                    //try parse int
-                    if (int.TryParse(part, out int num)) {
-                        if (first == -1) first = num;
-                        else last = num;
-                    }
+            void UpdateProvinceType(Province prov) {
+                if ((WaterTypes.Contains(prov.Type) && WastelandTypes.Contains(type)) || (WastelandTypes.Contains(prov.Type) && WaterTypes.Contains(type))) {
+                    prov.Type = "impassable_seas";
                 }
-                //loop through all numbers between first and last
+                else {
+                    prov.Type = type;
+                }
+            }
+
+            var parts = System.Text.RegularExpressions.Regex.Matches(line, @"\d+")
+                .Cast<System.Text.RegularExpressions.Match>()
+                .Select(m => m.Value)
+                .ToList();
+
+            if (line.ToUpper().Contains("RANGE") && parts.Count >= 2 && int.TryParse(parts.First(), out int first) && int.TryParse(parts.Last(), out int last)) {
                 for (int i = first; i <= last; i++) {
-                    //find prov with id i
-                    foreach (Province prov in provDict.Values) {
-                        if (prov.id == i) {
-                            //if prov.type is in watterTypes and type is in wastelandTypes or vice versa then set prov.type to "impassable_sea"
-                            if (watterTypes.Contains(prov.type) && wastelandTypes.Contains(type) || wastelandTypes.Contains(prov.type) && watterTypes.Contains(type)) {
-                                prov.type = "impassable_sea";
-                            }
-                            else {
-                                //set type of prov
-                                prov.type = type;
-                            }
-                            //print prov id and type
-                            //Console.WriteLine(prov.id + " " + prov.type);
-                        }
+                    if (provDict.Values.FirstOrDefault(prov => prov.ID == i) is Province prov) {
+                        UpdateProvinceType(prov);
                     }
                 }
-
             }
             else if (line.ToUpper().Contains("LIST")) {
-                //split the line on { and }
-                string[] parts = line.Split('{', '}')[1].Split();
-                //loop through all parts
-                foreach (string part in parts) {
-                    //try parse int
-                    if (int.TryParse(part, out int num)) {
-                        //find prov with id num
-
-                        foreach (Province prov in provDict.Values) {
-                            if (prov.id == num) {
-                                if ((prov.type == "sea_zones" && (type == "wasteland" || type == "impassable_terrain"))
-                                || (prov.type == "wasteland" || prov.type == "impassable_terrain") && type == "sea_zones") {
-                                    prov.type = "impassable_sea";
-                                }
-                                else {
-                                    //set type of prov
-                                    prov.type = type;
-                                }
-                            }
-                        }
+                foreach (var part in parts) {
+                    if (int.TryParse(part, out int num) && provDict.Values.FirstOrDefault(prov => prov.ID == num) is Province prov) {
+                        UpdateProvinceType(prov);
                     }
-                }
-            }
-
-        }
-
-        public static void ParseProvMap(Dictionary<Color, Province> provDict, string path) {
-            Console.WriteLine("Parsing provinces map...");
-            //load the provinces.bmp image
-            Bitmap bmp = new(path + @"map_data\provinces.png");
-            Bitmap? winter = null;
-            if (File.Exists(path + @"\winter.png")) {
-                winter = new(path + @"\winter.png");
-            }
-            //loop through all pixels
-            for (int x = 0; x < bmp.Width; x++) {
-                for (int y = 0; y < bmp.Height; y++) {
-                    //get the color of the pixel
-                    Color color = bmp.GetPixel(x, y);
-                    //if color is in provDict add the coord to the prov
-                    if (provDict.TryGetValue(color, out Province value)) {
-                        value.coords.Add(new(x, y));
-                        if (winter != null) {
-                            Color winterColor = winter.GetPixel(x, y);
-                            //convert to int using the Red - 25 / 200 and add it to value if it is not already in winterValues
-                            float winterValue = ((float)winterColor.R -25) / 200;
-                            if (!value.winterValues.Contains(winterValue)) {
-                                value.winterValues.Add(winterValue);
-                                //Console.WriteLine(value.id +" - "+winterValue);
-                            }
-                        }
-                    }
-                }
-
-                //print progress every 20%
-                if (x % (bmp.Width / 5) == 0) {
-                    Console.WriteLine("\t" + (x / (bmp.Width / 5) * 20) + "%");
                 }
             }
         }
 
+        public static void ParseProvMap(Dictionary<Color, Province> provinces, string path) {
+            if (!File.Exists(path)) {
+                Console.WriteLine($"File not found: {path}");
+                return;
+            }
+
+            using Bitmap image = new(path);
+
+            Console.WriteLine("Parsing Map");
+
+            // Lock the bitmap's bits
+            Rectangle rect = new(0, 0, image.Width, image.Height);
+            BitmapData bmpData = image.LockBits(rect, ImageLockMode.ReadOnly, image.PixelFormat);
+
+            int width = image.Width;
+            int height = image.Height;
+            int stride = bmpData.Stride;
+            int pixelSize = Image.GetPixelFormatSize(image.PixelFormat) / 8;
+
+            try {
+                // Get the address of the first line
+                IntPtr ptr = bmpData.Scan0;
+
+                unsafe {
+                    byte* rgbValues = (byte*)ptr;
+
+                    // Process the pixel data
+                    for (int y = 0; y < height; y++) {
+                        byte* row = rgbValues + (y * stride);
+                        for (int x = 0; x < width; x++) {
+                            byte* pixel = row + (x * pixelSize);
+                            Color c = Color.FromArgb(
+                                255,      // A
+                                pixel[2], // R
+                                pixel[1], // G
+                                pixel[0]  // B
+                            );
+
+                            if (!provinces.TryGetValue(c, out Province? value)) {
+                                value = new Province { Color = c };
+                                provinces[c] = value;
+                            }
+                            value.Coords.Add((x, y));
+                        }
+                        if (y % (height / 5) == 0) {
+                            Console.WriteLine($"\t{y * 100 / height}%");
+                        }
+                    }
+                }
+            }
+            finally {
+                // Unlock the bits
+                image.UnlockBits(bmpData);
+            }
+        }
     }
-
 }
 
